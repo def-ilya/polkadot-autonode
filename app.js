@@ -43,7 +43,7 @@ const main = async () => {
 
     // Asks for the image ID
     let amiId = await question('What AMI do you want to use? (Leave empty for ami-0b7dcd6e6fd797935)');
-    // If the AMI is falsy, we use the latest Amazon one. 
+    // If the AMI is falsy, we use an Ubuntu image. These are region-locked AFAIK - So need to correspond to above step.
     if (!amiId) amiId = 'ami-0b7dcd6e6fd797935';
 
 
@@ -79,9 +79,6 @@ const main = async () => {
                             return;
                         }
                     });
-
-
-
                 }
             });
         }
@@ -153,6 +150,7 @@ const main = async () => {
                 await ec2.describeInstances(params, function (err, data) {
                     instanceIp = data.Reservations[0].Instances[0].PublicIpAddress
                     console.log(instanceIp)
+                    // Pretty horrible, but we do this in case Amazon uses an interim value. 
                     if (instanceIp.indexOf(".") >= 0) {
                         console.log("Fetched IP!")
                         resolve('foo');
@@ -168,7 +166,7 @@ const main = async () => {
     // The servers are typically inaccessible for a bit - Time constraints with this project lead me to go this route. 
     console.log("Waiting for server to go live...")
     const delay = ms => new Promise(resolve => setTimeout(resolve, ms))
-    await delay(30000) /// waiting 15 second.
+    await delay(30000) /// wait x seconds
 
     // Builds the Ansible command
     const command = `ansible-playbook -i ${instanceIp}, --private-key keys/${nodeName}.pem -e "nodeName=${nodeName}" playbooks/install-polkadot.yml`
